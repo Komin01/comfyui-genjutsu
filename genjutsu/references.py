@@ -31,7 +31,7 @@ def load_image(path: str) -> np.ndarray:
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
 
 
-def _face_detector():
+def _face_detector(warn: bool = True):
     """Haar cascade face detector, or None when unavailable.
 
     OpenCV 5 moved CascadeClassifier out of the main package, so this
@@ -45,16 +45,18 @@ def _face_detector():
         if cls is not None and root:
             c = cls(root + "haarcascade_frontalface_default.xml")
             det = c if not c.empty() else False
-        if det is False:
+        if det is False and warn:
             log.warning("OpenCV face detector unavailable (OpenCV %s); reference auto-classification "
                         "won't detect people - set category=character explicitly.", cv2.__version__)
-        _HAAR = det
+        if det is not False or warn:
+            _HAAR = det  # cache; an unwarned miss is re-checked so the warning shows when it matters
+        return det or None
     return _HAAR or None
 
 
-def _faces(img: np.ndarray) -> Optional[list]:
+def _faces(img: np.ndarray, warn: bool = True) -> Optional[list]:
     """Detected face boxes, or None if no face detector is available."""
-    det = _face_detector()
+    det = _face_detector(warn)
     if det is None:
         return None
     g = cv2.cvtColor(to_uint8(img), cv2.COLOR_RGB2GRAY)
@@ -70,14 +72,14 @@ def border_uniformity(img: np.ndarray, frac: float = 0.06) -> float:
     return float(np.exp(-border.std(0).mean() / 0.05))
 
 
-def classify_reference(img: np.ndarray) -> tuple[RefCategory, dict]:
+def classify_reference(img: np.ndarray, warn: bool = True) -> tuple[RefCategory, dict]:
     """Heuristic categorization; the user can always override in the node.
     - a clear face covering a meaningful area -> CHARACTER
     - plain uniform border (studio shot)     -> PRODUCT
     - wide, busy, no dominant subject         -> LOCATION
     - otherwise                               -> STYLE"""
     H, W = img.shape[:2]
-    detected = _faces(img)
+    detected = _faces(img, warn)
     faces = detected or []
     face_frac = max((w * h for (_, _, w, h) in faces), default=0) / float(H * W)
     uni = border_uniformity(img)
@@ -152,7 +154,8 @@ def build_reference(
     compute_embeddings: bool = False,
     device: str = "cuda",
 ) -> Reference:
-    auto_cat, info = classify_reference(image)
+    # only warn about a missing face detector when we actually rely on auto-detection
+    auto_cat, info = classify_reference(image, warn=category in (None, "", "auto"))
     cat = RefCategory(category) if category not in (None, "", "auto") else auto_cat
     mask = None
     if cat in (RefCategory.PRODUCT, RefCategory.OBJECT, RefCategory.PROP, RefCategory.CHARACTER, RefCategory.OUTFIT, RefCategory.LOGO):
