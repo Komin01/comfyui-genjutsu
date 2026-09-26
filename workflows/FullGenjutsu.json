@@ -1,0 +1,120 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "character.png"
+    },
+    "_meta": {
+      "title": "Character reference"
+    }
+  },
+  "2": {
+    "class_type": "GenjutsuReference",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "category": "character",
+      "weight": 1.0,
+      "name": "hero",
+      "description": "",
+      "compute_embeddings": true
+    },
+    "_meta": {
+      "title": "GenjutsuReference"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "location.png"
+    },
+    "_meta": {
+      "title": "Location reference"
+    }
+  },
+  "4": {
+    "class_type": "GenjutsuReference",
+    "inputs": {
+      "references": [
+        "2",
+        0
+      ],
+      "image": [
+        "3",
+        0
+      ],
+      "category": "location",
+      "weight": 1.0,
+      "name": "world",
+      "description": "",
+      "compute_embeddings": true
+    },
+    "_meta": {
+      "title": "GenjutsuReference"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "style.png"
+    },
+    "_meta": {
+      "title": "Style reference"
+    }
+  },
+  "6": {
+    "class_type": "GenjutsuReference",
+    "inputs": {
+      "references": [
+        "4",
+        0
+      ],
+      "image": [
+        "5",
+        0
+      ],
+      "category": "style",
+      "weight": 0.6,
+      "name": "look",
+      "description": "",
+      "compute_embeddings": true
+    },
+    "_meta": {
+      "title": "GenjutsuReference"
+    }
+  },
+  "7": {
+    "class_type": "GenjutsuOneClick",
+    "inputs": {
+      "video": "input.mp4",
+      "operation": "full_recast",
+      "references": [
+        "6",
+        0
+      ],
+      "target": "person",
+      "prompt": "",
+      "preserve_motion": true,
+      "preserve_camera": true,
+      "preserve_background": false,
+      "preserve_identity": false,
+      "preserve_lighting": false,
+      "quality": "standard",
+      "strength": 1.0,
+      "seed": 42,
+      "backend": "wan22",
+      "codec": "h264",
+      "upscale": 1.0,
+      "max_frames": 0,
+      "box": "",
+      "protect": "",
+      "video_path": "",
+      "save_project": true
+    },
+    "_meta": {
+      "title": "Genjutsu"
+    }
+  }
+}

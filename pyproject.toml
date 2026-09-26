@@ -1,0 +1,15 @@
+[project]
+name = "comfyui-genjutsu"
+description = "Genjutsu-style open-source video transformation pipeline for ComfyUI: object/product/character swap, motion transfer and environment recasts that preserve motion, camera and background. Wan 2.2 backend, swappable."
+version = "0.1.0"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "opencv-python>=4.8", "PyYAML>=6.0", "Pillow>=10.0", "diffusers>=0.40.0", "transformers>=4.46", "accelerate>=0.33", "huggingface_hub>=0.24", "ftfy", "sentencepiece"]
+
+[project.urls]
+Repository = "https://github.com/<you>/ComfyUI-Genjutsu"
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "Genjutsu-OSS"
+Icon = ""

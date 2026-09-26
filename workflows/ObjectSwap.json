@@ -1,0 +1,357 @@
+{
+  "1": {
+    "class_type": "GenjutsuVideoLoader",
+    "inputs": {
+      "video": "input.mp4",
+      "max_frames": 0,
+      "start_frame": 0,
+      "stride": 1,
+      "max_side": 1280
+    },
+    "_meta": {
+      "title": "Source video"
+    }
+  },
+  "2": {
+    "class_type": "GenjutsuOpticalFlow",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "model": "raft",
+      "max_side": 960
+    },
+    "_meta": {
+      "title": "GenjutsuOpticalFlow"
+    }
+  },
+  "3": {
+    "class_type": "GenjutsuSegmenter",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "target": "custom",
+      "text": "wrist watch",
+      "box": "",
+      "points": "",
+      "prompt_frame": 0,
+      "model": "sam2",
+      "temporal_smoothing": 0.4,
+      "fill_holes": true,
+      "flow": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Select wrist watch"
+    }
+  },
+  "4": {
+    "class_type": "GenjutsuSegmenter",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "target": "hands",
+      "text": "",
+      "box": "",
+      "points": "",
+      "prompt_frame": 0,
+      "model": "sam2",
+      "temporal_smoothing": 0.4,
+      "fill_holes": true,
+      "flow": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Occluders (hands)"
+    }
+  },
+  "5": {
+    "class_type": "GenjutsuDepthExtractor",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "model": "video_depth_anything",
+      "encoder": "vits",
+      "fps": [
+        "1",
+        2
+      ],
+      "flow": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "GenjutsuDepthExtractor"
+    }
+  },
+  "6": {
+    "class_type": "GenjutsuPreservationMasks",
+    "inputs": {
+      "edit_mask": [
+        "3",
+        0
+      ],
+      "dilate_px": 6,
+      "feather_px": 12,
+      "depth_occlusion": true,
+      "protect_mask": [
+        "4",
+        0
+      ],
+      "depth": [
+        "5",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "GenjutsuPreservationMasks"
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "object.png"
+    },
+    "_meta": {
+      "title": "Object reference"
+    }
+  },
+  "8": {
+    "class_type": "GenjutsuReference",
+    "inputs": {
+      "image": [
+        "7",
+        0
+      ],
+      "category": "object",
+      "weight": 1.0,
+      "name": "replacement",
+      "description": "",
+      "compute_embeddings": true
+    },
+    "_meta": {
+      "title": "GenjutsuReference"
+    }
+  },
+  "9": {
+    "class_type": "GenjutsuControlPackage",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "operation": "object_swap",
+      "video_info": [
+        "1",
+        1
+      ],
+      "references": [
+        "8",
+        0
+      ],
+      "edit_mask": [
+        "6",
+        0
+      ],
+      "preserve_mask": [
+        "6",
+        1
+      ],
+      "soft_mask": [
+        "6",
+        2
+      ],
+      "subject_mask": [
+        "3",
+        0
+      ],
+      "depth": [
+        "5",
+        1
+      ],
+      "flow": [
+        "2",
+        0
+      ],
+      "seed": 42,
+      "steps": 30,
+      "guidance": 5.0,
+      "identity_strength": 0.85,
+      "motion_strength": 1.0,
+      "reference_strength": 0.75,
+      "preservation_strength": 1.0,
+      "style_strength": 0.5,
+      "chunk_frames": 81,
+      "overlap_frames": 9,
+      "recast_control": "depth"
+    },
+    "_meta": {
+      "title": "GenjutsuControlPackage"
+    }
+  },
+  "10": {
+    "class_type": "GenjutsuPromptCompiler",
+    "inputs": {
+      "controls": [
+        "9",
+        0
+      ],
+      "target": "wrist watch",
+      "motion": "original",
+      "preserve_person": true,
+      "preserve_hands": true,
+      "preserve_background": true,
+      "preserve_camera": true,
+      "preserve_lighting": true,
+      "preserve_expression": false,
+      "user_prompt": "",
+      "environment": "",
+      "style": "",
+      "extra_negative": ""
+    },
+    "_meta": {
+      "title": "GenjutsuPromptCompiler"
+    }
+  },
+  "11": {
+    "class_type": "GenjutsuGenerate",
+    "inputs": {
+      "controls": [
+        "10",
+        0
+      ],
+      "backend": "wan22",
+      "max_side": 832,
+      "max_area": 399360,
+      "cpu_offload": true,
+      "low_vram": false,
+      "vae_tiling": true
+    },
+    "_meta": {
+      "title": "GenjutsuGenerate"
+    }
+  },
+  "12": {
+    "class_type": "GenjutsuTemporalRepair",
+    "inputs": {
+      "generated": [
+        "11",
+        0
+      ],
+      "controls": [
+        "10",
+        0
+      ],
+      "limit_to_edit_region": true,
+      "repair_strength": 0.6,
+      "smoothing_strength": 0.3,
+      "inconsistency_threshold": 0.08
+    },
+    "_meta": {
+      "title": "GenjutsuTemporalRepair"
+    }
+  },
+  "13": {
+    "class_type": "GenjutsuCompositor",
+    "inputs": {
+      "original": [
+        "1",
+        0
+      ],
+      "generated": [
+        "12",
+        0
+      ],
+      "soft_mask": [
+        "6",
+        2
+      ],
+      "preserve_mask": [
+        "6",
+        1
+      ],
+      "edit_mask": [
+        "6",
+        0
+      ],
+      "mode": "multiband",
+      "color_match": 1.0,
+      "local_lighting": 0.5
+    },
+    "_meta": {
+      "title": "GenjutsuCompositor"
+    }
+  },
+  "14": {
+    "class_type": "GenjutsuVideoOutput",
+    "inputs": {
+      "frames": [
+        "13",
+        0
+      ],
+      "filename_prefix": "genjutsu/object_swap",
+      "video_info": [
+        "1",
+        1
+      ],
+      "codec": "h264",
+      "crf": 16,
+      "fps": 0.0,
+      "keep_audio": true
+    },
+    "_meta": {
+      "title": "GenjutsuVideoOutput"
+    }
+  },
+  "15": {
+    "class_type": "GenjutsuEvaluate",
+    "inputs": {
+      "source": [
+        "1",
+        0
+      ],
+      "output": [
+        "13",
+        0
+      ],
+      "max_side": 480,
+      "controls": [
+        "10",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "GenjutsuEvaluate"
+    }
+  },
+  "16": {
+    "class_type": "GenjutsuSaveProject",
+    "inputs": {
+      "controls": [
+        "10",
+        0
+      ],
+      "name": "genjutsu/object_swap",
+      "embed_source": false,
+      "output_path": [
+        "14",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "GenjutsuSaveProject"
+    }
+  }
+}

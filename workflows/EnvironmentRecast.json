@@ -1,0 +1,289 @@
+{
+  "1": {
+    "class_type": "GenjutsuVideoLoader",
+    "inputs": {
+      "video": "input.mp4",
+      "max_frames": 0,
+      "start_frame": 0,
+      "stride": 1,
+      "max_side": 1280
+    },
+    "_meta": {
+      "title": "Source video"
+    }
+  },
+  "2": {
+    "class_type": "GenjutsuOpticalFlow",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "model": "raft",
+      "max_side": 960
+    },
+    "_meta": {
+      "title": "GenjutsuOpticalFlow"
+    }
+  },
+  "3": {
+    "class_type": "GenjutsuSegmenter",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "target": "person",
+      "text": "",
+      "box": "",
+      "points": "",
+      "prompt_frame": 0,
+      "model": "sam2",
+      "temporal_smoothing": 0.4,
+      "fill_holes": true,
+      "flow": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Subject to keep"
+    }
+  },
+  "4": {
+    "class_type": "GenjutsuDepthExtractor",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "model": "video_depth_anything",
+      "encoder": "vits",
+      "fps": [
+        "1",
+        2
+      ],
+      "flow": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "GenjutsuDepthExtractor"
+    }
+  },
+  "5": {
+    "class_type": "GenjutsuCameraAnalyzer",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "exclude_mask": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "GenjutsuCameraAnalyzer"
+    }
+  },
+  "6": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "location.png"
+    },
+    "_meta": {
+      "title": "Location reference"
+    }
+  },
+  "7": {
+    "class_type": "GenjutsuReference",
+    "inputs": {
+      "image": [
+        "6",
+        0
+      ],
+      "category": "location",
+      "weight": 1.0,
+      "name": "new_world",
+      "description": "a rain-soaked neon futuristic city street at night",
+      "compute_embeddings": true
+    },
+    "_meta": {
+      "title": "GenjutsuReference"
+    }
+  },
+  "8": {
+    "class_type": "GenjutsuControlPackage",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "operation": "environment_recast",
+      "video_info": [
+        "1",
+        1
+      ],
+      "references": [
+        "7",
+        0
+      ],
+      "subject_mask": [
+        "3",
+        0
+      ],
+      "depth": [
+        "4",
+        1
+      ],
+      "flow": [
+        "2",
+        0
+      ],
+      "camera": [
+        "5",
+        0
+      ],
+      "seed": 42,
+      "steps": 30,
+      "guidance": 5.0,
+      "identity_strength": 0.85,
+      "motion_strength": 1.0,
+      "reference_strength": 0.75,
+      "preservation_strength": 1.0,
+      "style_strength": 0.5,
+      "chunk_frames": 81,
+      "overlap_frames": 9,
+      "recast_control": "depth"
+    },
+    "_meta": {
+      "title": "GenjutsuControlPackage"
+    }
+  },
+  "9": {
+    "class_type": "GenjutsuPromptCompiler",
+    "inputs": {
+      "controls": [
+        "8",
+        0
+      ],
+      "target": "",
+      "motion": "original",
+      "preserve_person": true,
+      "preserve_hands": true,
+      "preserve_background": false,
+      "preserve_camera": true,
+      "preserve_lighting": true,
+      "preserve_expression": false,
+      "user_prompt": "",
+      "environment": "a futuristic city",
+      "style": "",
+      "extra_negative": ""
+    },
+    "_meta": {
+      "title": "GenjutsuPromptCompiler"
+    }
+  },
+  "10": {
+    "class_type": "GenjutsuGenerate",
+    "inputs": {
+      "controls": [
+        "9",
+        0
+      ],
+      "backend": "wan22",
+      "max_side": 832,
+      "max_area": 399360,
+      "cpu_offload": true,
+      "low_vram": false,
+      "vae_tiling": true
+    },
+    "_meta": {
+      "title": "GenjutsuGenerate"
+    }
+  },
+  "11": {
+    "class_type": "GenjutsuTemporalRepair",
+    "inputs": {
+      "generated": [
+        "10",
+        0
+      ],
+      "controls": [
+        "9",
+        0
+      ],
+      "limit_to_edit_region": false,
+      "repair_strength": 0.6,
+      "smoothing_strength": 0.3,
+      "inconsistency_threshold": 0.08
+    },
+    "_meta": {
+      "title": "GenjutsuTemporalRepair"
+    }
+  },
+  "12": {
+    "class_type": "GenjutsuMaskOps",
+    "inputs": {
+      "a": [
+        "3",
+        0
+      ],
+      "op": "feather_a",
+      "amount_px": 6
+    },
+    "_meta": {
+      "title": "Feathered subject"
+    }
+  },
+  "13": {
+    "class_type": "GenjutsuCompositor",
+    "inputs": {
+      "original": [
+        "11",
+        0
+      ],
+      "generated": [
+        "1",
+        0
+      ],
+      "soft_mask": [
+        "12",
+        0
+      ],
+      "edit_mask": [
+        "3",
+        0
+      ],
+      "mode": "alpha",
+      "color_match": 0.0,
+      "local_lighting": 0.0
+    },
+    "_meta": {
+      "title": "Restore original subject"
+    }
+  },
+  "14": {
+    "class_type": "GenjutsuVideoOutput",
+    "inputs": {
+      "frames": [
+        "13",
+        0
+      ],
+      "filename_prefix": "genjutsu/environment_recast",
+      "video_info": [
+        "1",
+        1
+      ],
+      "codec": "h264",
+      "crf": 16,
+      "fps": 0.0,
+      "keep_audio": true
+    },
+    "_meta": {
+      "title": "GenjutsuVideoOutput"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+# Optional analysis models. Each one enables a node or improves a fallback;
+# nothing breaks if one is missing. Install what you need:
+#   python install.py --all        (or pick groups, see install.py --help)
+
+# segmentation: SAM 2 video predictor (Apache-2.0)
+git+https://github.com/facebookresearch/sam2.git
+
+# pose: DWPose via rtmlib + onnxruntime (Apache-2.0)
+rtmlib
+onnxruntime-gpu; platform_system != "Darwin"
+onnxruntime; platform_system == "Darwin"
+
+# depth: Video Depth Anything (Small weights Apache-2.0; Base/Large CC-BY-NC-4.0)
+git+https://github.com/DepthAnything/Video-Depth-Anything.git
+
+# identity lock: InsightFace (code MIT; pretrained models NON-COMMERCIAL research only)
+insightface
+
+# reference cut-outs
+rembg
+
+# upscaling (already bundled with ComfyUI)
+spandrel

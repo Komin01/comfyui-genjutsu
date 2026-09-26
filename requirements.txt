@@ -1,0 +1,13 @@
+# Core (always required). torch/torchvision come from your ComfyUI install.
+numpy>=1.24
+opencv-python>=4.8
+PyYAML>=6.0
+Pillow>=10.0
+
+# Generation (Wan 2.2 / VACE / Animate). WanAnimatePipeline needs diffusers >= 0.40.
+diffusers>=0.40.0
+transformers>=4.46
+accelerate>=0.33
+huggingface_hub>=0.24
+ftfy
+sentencepiece

@@ -1,0 +1,196 @@
+{
+  "1": {
+    "class_type": "GenjutsuVideoLoader",
+    "inputs": {
+      "video": "input.mp4",
+      "max_frames": 0,
+      "start_frame": 0,
+      "stride": 1,
+      "max_side": 1280
+    },
+    "_meta": {
+      "title": "Motion source video"
+    }
+  },
+  "2": {
+    "class_type": "GenjutsuPoseExtractor",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "face_size": 512,
+      "smoothing": 0.5
+    },
+    "_meta": {
+      "title": "GenjutsuPoseExtractor"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "character.png"
+    },
+    "_meta": {
+      "title": "Character reference"
+    }
+  },
+  "4": {
+    "class_type": "GenjutsuReference",
+    "inputs": {
+      "image": [
+        "3",
+        0
+      ],
+      "category": "character",
+      "weight": 1.0,
+      "name": "new_character",
+      "description": "",
+      "compute_embeddings": true
+    },
+    "_meta": {
+      "title": "GenjutsuReference"
+    }
+  },
+  "5": {
+    "class_type": "GenjutsuControlPackage",
+    "inputs": {
+      "frames": [
+        "1",
+        0
+      ],
+      "operation": "motion_transfer",
+      "video_info": [
+        "1",
+        1
+      ],
+      "references": [
+        "4",
+        0
+      ],
+      "pose_frames": [
+        "2",
+        0
+      ],
+      "face_frames": [
+        "2",
+        1
+      ],
+      "seed": 42,
+      "steps": 30,
+      "guidance": 5.0,
+      "identity_strength": 0.85,
+      "motion_strength": 1.0,
+      "reference_strength": 0.75,
+      "preservation_strength": 1.0,
+      "style_strength": 0.5,
+      "chunk_frames": 81,
+      "overlap_frames": 9,
+      "recast_control": "pose"
+    },
+    "_meta": {
+      "title": "GenjutsuControlPackage"
+    }
+  },
+  "6": {
+    "class_type": "GenjutsuPromptCompiler",
+    "inputs": {
+      "controls": [
+        "5",
+        0
+      ],
+      "target": "",
+      "motion": "original",
+      "preserve_person": false,
+      "preserve_hands": false,
+      "preserve_background": false,
+      "preserve_camera": true,
+      "preserve_lighting": true,
+      "preserve_expression": false,
+      "user_prompt": "",
+      "environment": "",
+      "style": "",
+      "extra_negative": ""
+    },
+    "_meta": {
+      "title": "GenjutsuPromptCompiler"
+    }
+  },
+  "7": {
+    "class_type": "GenjutsuGenerate",
+    "inputs": {
+      "controls": [
+        "6",
+        0
+      ],
+      "backend": "wan22",
+      "max_side": 832,
+      "max_area": 399360,
+      "cpu_offload": true,
+      "low_vram": false,
+      "vae_tiling": true
+    },
+    "_meta": {
+      "title": "GenjutsuGenerate"
+    }
+  },
+  "8": {
+    "class_type": "GenjutsuTemporalRepair",
+    "inputs": {
+      "generated": [
+        "7",
+        0
+      ],
+      "controls": [
+        "6",
+        0
+      ],
+      "limit_to_edit_region": false,
+      "repair_strength": 0.6,
+      "smoothing_strength": 0.3,
+      "inconsistency_threshold": 0.08
+    },
+    "_meta": {
+      "title": "GenjutsuTemporalRepair"
+    }
+  },
+  "9": {
+    "class_type": "GenjutsuIdentityLock",
+    "inputs": {
+      "generated": [
+        "8",
+        0
+      ],
+      "references": [
+        "4",
+        0
+      ],
+      "threshold": 0.45,
+      "stride": 2
+    },
+    "_meta": {
+      "title": "GenjutsuIdentityLock"
+    }
+  },
+  "10": {
+    "class_type": "GenjutsuVideoOutput",
+    "inputs": {
+      "frames": [
+        "8",
+        0
+      ],
+      "filename_prefix": "genjutsu/motion_transfer",
+      "video_info": [
+        "1",
+        1
+      ],
+      "codec": "h264",
+      "crf": 16,
+      "fps": 0.0,
+      "keep_audio": true
+    },
+    "_meta": {
+      "title": "GenjutsuVideoOutput"
+    }
+  }
+}

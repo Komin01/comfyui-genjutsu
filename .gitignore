@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+genjutsu_cache/
+examples/out/
+*.genjutsu
+.pytest_cache/

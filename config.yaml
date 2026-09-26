@@ -1,0 +1,78 @@
+# Genjutsu-OSS configuration. Every key is optional; missing keys fall back to
+# the defaults in genjutsu/config.py. Point GENJUTSU_CONFIG at another file to
+# switch profiles.
+
+backend: wan22            # wan22 | wan_animate | classical (model-free baseline) | your own
+device: cuda
+dtype: bfloat16
+
+models:                   # any diffusers-format checkpoint id or local folder
+  wan22_t2v: Wan-AI/Wan2.2-T2V-A14B-Diffusers
+  wan22_i2v: Wan-AI/Wan2.2-I2V-A14B-Diffusers
+  wan22_ti2v: Wan-AI/Wan2.2-TI2V-5B-Diffusers
+  wan_vace: Wan-AI/Wan2.1-VACE-14B-diffusers      # region edits + recasts; 1.3B variant for small GPUs
+  wan_animate: Wan-AI/Wan2.2-Animate-14B-Diffusers
+
+generation:
+  max_side: 832           # generation resolution (longest side, multiple of 16)
+  max_area: 399360        # 832*480; use 921600 for 1280x720
+  animate_steps: 20
+  animate_prev_frames: 5  # Wan-Animate temporal guidance frames between segments (4n+1)
+
+segmentation:
+  model: sam2             # sam2 | grabcut
+  checkpoint: facebook/sam2.1-hiera-large
+
+depth:
+  model: video_depth_anything   # video_depth_anything | depth_anything_v2
+  checkpoint: vits              # vits = Apache-2.0. vitb/vitl weights are CC-BY-NC-4.0 (non-commercial)
+
+pose:
+  model: dwpose
+
+optical_flow:
+  model: raft             # raft | dis
+  fallback: dis
+  max_side: 960
+
+identity:
+  enabled: true           # InsightFace model weights are non-commercial research only
+  model: insightface
+  threshold: 0.45
+
+temporal:
+  enabled: true
+  strength: 0.75
+  smoothing_strength: 0.3
+  repair_strength: 0.6
+  inconsistency_threshold: 0.08
+
+compositing:
+  enabled: true
+  dilate_px: 6
+  feather_px: 12
+  color_match: true
+
+upscale:
+  enabled: false
+  model: realesrgan
+  model_path: null        # path to a Real-ESRGAN / spandrel .pth; null = Lanczos
+  scale: 2
+  sharpen: 0.15
+
+chunking:
+  chunk_frames: 81        # Wan wants 4n+1
+  overlap_frames: 9
+
+performance:
+  low_vram: false         # sequential CPU offload (slowest, smallest footprint)
+  cpu_offload: true       # model-level offload
+  tile_size: 1            # >0 enables VAE tiling
+
+cache:
+  enabled: true
+  root: ./genjutsu_cache
+
+output:
+  codec: h264             # h264 | h265 | prores | vp9 | png
+  crf: 16
