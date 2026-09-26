@@ -31,13 +31,35 @@ def load_image(path: str) -> np.ndarray:
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
 
 
-def _faces(img: np.ndarray) -> list:
+def _face_detector():
+    """Haar cascade face detector, or None when unavailable.
+
+    OpenCV 5 moved CascadeClassifier out of the main package, so this
+    must be optional: without it, auto-classification simply can't
+    recognize people and the user picks the CHARACTER category."""
     global _HAAR
     if _HAAR is None:
-        _HAAR = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        cls = getattr(cv2, "CascadeClassifier", None)
+        root = getattr(getattr(cv2, "data", None), "haarcascades", None)
+        det = False
+        if cls is not None and root:
+            c = cls(root + "haarcascade_frontalface_default.xml")
+            det = c if not c.empty() else False
+        if det is False:
+            log.warning("OpenCV face detector unavailable (OpenCV %s); reference auto-classification "
+                        "won't detect people - set category=character explicitly.", cv2.__version__)
+        _HAAR = det
+    return _HAAR or None
+
+
+def _faces(img: np.ndarray) -> Optional[list]:
+    """Detected face boxes, or None if no face detector is available."""
+    det = _face_detector()
+    if det is None:
+        return None
     g = cv2.cvtColor(to_uint8(img), cv2.COLOR_RGB2GRAY)
     m = max(24, min(g.shape) // 12)
-    return list(_HAAR.detectMultiScale(g, scaleFactor=1.1, minNeighbors=6, minSize=(m, m)))
+    return list(det.detectMultiScale(g, scaleFactor=1.1, minNeighbors=6, minSize=(m, m)))
 
 
 def border_uniformity(img: np.ndarray, frac: float = 0.06) -> float:
@@ -55,11 +77,13 @@ def classify_reference(img: np.ndarray) -> tuple[RefCategory, dict]:
     - wide, busy, no dominant subject         -> LOCATION
     - otherwise                               -> STYLE"""
     H, W = img.shape[:2]
-    faces = _faces(img)
+    detected = _faces(img)
+    faces = detected or []
     face_frac = max((w * h for (_, _, w, h) in faces), default=0) / float(H * W)
     uni = border_uniformity(img)
     edges = cv2.Canny(to_uint8(img), 80, 160).mean() / 255.0
-    info = {"faces": len(faces), "face_area_frac": face_frac, "border_uniformity": uni, "edge_density": float(edges)}
+    info = {"faces": len(faces), "face_area_frac": face_frac, "border_uniformity": uni, "edge_density": float(edges),
+            "face_detector": detected is not None}
     if faces and face_frac > 0.01:
         return RefCategory.CHARACTER, info
     if uni > 0.6:

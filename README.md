@@ -295,6 +295,7 @@ GPU generation benchmarks: to be measured.
 | Product colors look wrong | Color Match `chroma: offset` (the compositor already uses it); lower `local_lighting`. |
 | Flicker in recasts | Raise Temporal Repair `repair_strength` and `smoothing_strength`; check `outlier_frames` in its report. |
 | Seams at chunk boundaries | Increase `overlap_frames`; for character ops Wan-Animate segments internally (`generation.animate_prev_frames`). |
+| Character references are classified as product/style | OpenCV 5 removed the built-in face detector used for auto-classification. Set the Reference node's `category` to `character` explicitly. |
 | A node is missing | See ComfyUI's console for `[Genjutsu] failed to load nodes.<module>` and run `python install.py --check`. |
 
 ## Observed vs. inferred vs. implemented
