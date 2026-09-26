@@ -112,12 +112,21 @@ def load_frames(
     cmd = [_bin("ffmpeg"), "-v", "error", "-i", str(path)]
     if vf:
         cmd += ["-vf", ",".join(vf)]
-    if sel:
-        cmd += ["-vsync", "0"]
+    tail = []
     if max_frames:
-        cmd += ["-frames:v", str(max_frames)]
-    cmd += ["-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
-    raw = subprocess.run(cmd, capture_output=True, check=True).stdout
+        tail += ["-frames:v", str(max_frames)]
+    tail += ["-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
+    if sel:
+        # keep selected frames as-is (no duplication to fill timestamp gaps).
+        # -fps_mode exists since FFmpeg 5.1; -vsync was removed in newer FFmpeg.
+        proc = subprocess.run(cmd + ["-fps_mode", "passthrough"] + tail, capture_output=True)
+        if proc.returncode != 0 and b"fps_mode" in proc.stderr:
+            proc = subprocess.run(cmd + ["-vsync", "0"] + tail, capture_output=True)
+    else:
+        proc = subprocess.run(cmd + tail, capture_output=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed decoding {path}: {proc.stderr.decode(errors='replace').strip()}")
+    raw = proc.stdout
     arr = np.frombuffer(raw, np.uint8)
     n = arr.size // (w * h * 3)
     frames = arr[: n * w * h * 3].reshape(n, h, w, 3).astype(np.float32) / 255.0
